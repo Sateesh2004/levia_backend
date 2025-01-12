@@ -9,7 +9,7 @@ import connect from "./config/connectdb.js"
 const app = express()
 
 
-const allowedOrigins = ['http://localhost:3000'];
+const allowedOrigins = ['https://leviatech.vercel.app'];
 app.use(cors(
     {
         origin:allowedOrigins,
