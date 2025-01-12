@@ -9,7 +9,7 @@ import connect from "./config/connectdb.js"
 const app = express()
 
 
-const allowedOrigins = ['http://localhost:3000'];
+const allowedOrigins = ['https://leviatech.vercel.app'];
 app.use(cors(
     {
         origin:allowedOrigins,
@@ -27,34 +27,37 @@ app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 app.post('/api/patients', async (req, res) => {
-    const { firstName, lastName, email, phone, dateOfBirth, patientType  } = req.body;
-  
-    // Validate data
-    // if (!firstName || !lastName || !email || !phone || !dateOfBirth) {
-    //   return res.status(400).json({ message: 'All fields are required' });
-    // }
-  
-    try {
-      // Create a new patient record
-      const newPatient = new Patient({
-        firstName,
-        lastName,
-        email,
-        phone,
-        dateOfBirth,
-        patientType
-      });
-  
-      // Save the patient to the database
-      const savedPatient = await newPatient.save();
-  
-      // Send success response
-      res.status(201).json({ message: 'Patient details saved successfully', data: savedPatient });
-    } catch (error) {
-      console.error('Error saving patient:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
+  const { firstName, lastName, email, phone, dateOfBirth, patientType } = req.body;
+
+  console.log(req.body); // Log the request body for debugging
+
+  try {
+    // Check if the email already exists
+    const existingPatient = await Patient.findOne({ email });
+    if (existingPatient) {
+      return res.status(400).json({ message: 'Email already exists' });
     }
-  });
+
+    // Create a new patient record
+    const newPatient = new Patient({
+      firstName,
+      lastName,
+      email,
+      phone,
+      dateOfBirth,
+      patientType,
+    });
+
+    // Save the patient to the database
+    const savedPatient = await newPatient.save();
+
+    // Send success response
+    res.status(201).json({ message: 'Patient details saved successfully', data: savedPatient });
+  } catch (error) {
+    console.error('Error saving patient:', error);
+    res.status(500).json({ message: error.message || 'Internal Server Error' });
+  }
+});
 
 
 
@@ -62,13 +65,10 @@ app.post('/api/patients', async (req, res) => {
 
   app.get('/api/patient-count', async (req, res) => {
     try {
-      // Count the number of OPD patients
       const opdCount = await Patient.countDocuments({ patientType: 'OPD' });
   
-      // Count the number of IPD patients
       const ipdCount = await Patient.countDocuments({ patientType: 'IPD' });
   
-      // Return both counts
       res.status(200).json({
         opdCount,
         ipdCount
